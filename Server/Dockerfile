@@ -6,12 +6,12 @@ COPY . /src
 WORKDIR /src
 RUN ls
 RUN dotnet restore
-RUN dotnet build "./IdxFaceRecordingApi.csproj" -c Release -o /app/build
+RUN dotnet build "./FaceRecordingApi.csproj" -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "./IdxFaceRecordingApi.csproj" -c Release -o /app/publish
+RUN dotnet publish "./FaceRecordingApi.csproj" -c Release -o /app/publish
 
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "IdxFaceRecordingApi.dll"]
+ENTRYPOINT ["dotnet", "FaceRecordingApi.dll"]
