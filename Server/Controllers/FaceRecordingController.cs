@@ -8,14 +8,18 @@ namespace IdxFaceRecordingApi.Controllers;
 [ApiController]
 public class FaceRecordingController : ControllerBase
 {
+    private readonly ILogger<FaceRecordingController> _logger;
+
     private readonly string IdxAccessKey;
     
     private readonly string IdxSecretKey;
 
     private const string LivelinessApiUrl = "https://api.id-x.org/idx/api2/liveness/check";
     
-    public FaceRecordingController(IConfiguration configuration)
+    public FaceRecordingController(IConfiguration configuration, ILogger<FaceRecordingController> logger)
     {
+        _logger = logger;
+
         IdxAccessKey = configuration.GetValue<string>("idx:accessKey")!;
         IdxSecretKey = configuration.GetValue<string>("idx:secretKey")!;
     }
@@ -50,9 +54,11 @@ public class FaceRecordingController : ControllerBase
         content.Add(videoContent, "video", "video.mp4");
         
         var response = await client.PostAsync(LivelinessApiUrl, content);
-        var status = await response.Content.ReadAsStringAsync();
-        var data = await response.Content.ReadFromJsonAsync<LivelinessResponse>();
+        var responseText = await response.Content.ReadAsStringAsync();
+        var responseData = await response.Content.ReadFromJsonAsync<LivelinessResponse>();
 
-        return Ok(new { alive = data.Alive, photo = data.Photo });
+        _logger.LogInformation($"Response: {responseText}");
+
+        return Ok(new { alive = responseData.Alive, photo = responseData.Photo });
     }
 }
