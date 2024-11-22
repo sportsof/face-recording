@@ -1,0 +1,19 @@
+services:   
+  client:
+    container_name: face-recording-client
+    hostname: face-recording-client
+    restart: always
+    build: Client/
+    volumes:
+      - ./nginx/logs:/var/log/nginx
+    ports:
+      - "0.0.0.0:10087:80"
+
+  api:
+    container_name: face-recording-server
+    hostname: face-recording-server
+    restart: always
+    build: Server/
+    ports:
+      - "0.0.0.0:10088:10088"
+
