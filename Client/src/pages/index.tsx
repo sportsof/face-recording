@@ -5,7 +5,7 @@ import axios from 'axios';
 import React, { useEffect, useRef } from 'react';
 
 export default () => {
-  const loadUrl = 'http://localhost:5019/api/FaceRecording/CheckVideo';
+  const loadUrl = '/api/FaceRecording/CheckVideo';
 
   const {
     initRecorder,
