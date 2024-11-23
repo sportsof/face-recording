@@ -12,15 +12,11 @@
   },
   "dependencies": {
     "@ant-design/icons": "^5.0.1",
-    "@ant-design/pro-components": "^2.4.4",
-    "@ffmpeg/core": "^0.12.6",
-    "@ffmpeg/ffmpeg": "^0.12.10",
     "@tensorflow/tfjs": "^4.22.0",
     "@umijs/max": "^4.3.34",
     "antd": "^5.4.0",
     "canvas": "^2.11.2",
     "face-api.js": "^0.22.2",
-    "ffmpeg.js": "^4.2.9003",
     "msr": "^1.3.4",
     "recordrtc": "^5.6.2"
   },

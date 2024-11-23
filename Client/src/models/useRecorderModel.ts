@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import RecordRTC from 'recordrtc';
 
 export default function () {
-  const fragmentCount: number = 20;
+  const fragmentCount: number = 4;
 
   const [isRecording, setIsRecording] = useState<boolean>(false)
   const [fragmentNumber, setFragmentNumber] = useState<number>(0)
@@ -19,7 +19,7 @@ export default function () {
   useEffect(() => {
     if(time == 0) return;
 
-    const timer = setTimeout(recordVideoHandler, 200);
+    const timer = setTimeout(recordVideoHandler, 1000);
 
     return () => {
       clearTimeout(timer);
