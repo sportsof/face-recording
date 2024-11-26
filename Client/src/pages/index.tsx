@@ -23,11 +23,13 @@ export default () => {
   const [liveness, setLiveness] = React.useState<ILivenessResponse>();
 
   const recordAndSave = async () => {
-    setButtonDisabled(true);
-    startLiveness();
+    setButtonDisabled(true)
+    startLiveness()
   }
 
-  useEffect(() => initRecorder(), []);
+  useEffect(() => {
+    initRecorder()
+  }, []);
 
   useEffect(() => {
     if (video) {
@@ -43,11 +45,11 @@ export default () => {
       }).then((response) => {
         setLiveness(response.data);
       }).catch((error) => {
-        console.error('Ошибка при загрузке видео на сервер:', error);
+        console.error('Ошибка при загрузке видео на сервер:', error)
       }).finally(() => {
         clearVideo()
-        setButtonDisabled(false);
-        fillFacePrompt(null);
+        setButtonDisabled(false)
+        fillFacePrompt(null)
         setIsmodalOpen(true)
       })
     }

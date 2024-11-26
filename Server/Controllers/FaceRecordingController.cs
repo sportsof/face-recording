@@ -30,14 +30,14 @@ public class FaceRecordingController : ControllerBase
         if (request?.Video is null || request.Video.Length == 0)
             return new LivenessResponse("Ошибка загрузки видео");
         
-        var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "Uploads");
+        var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
 
         if (!Directory.Exists(uploadsFolder))
         {
             Directory.CreateDirectory(uploadsFolder);
         }
 
-        var filePath = Path.Combine(uploadsFolder, request.Video!.FileName);
+        var filePath = Path.Combine(uploadsFolder, $"video_{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")}");
         await using var stream = new FileStream(filePath, FileMode.Create);
         await request.Video.CopyToAsync(stream);
         stream.Close();

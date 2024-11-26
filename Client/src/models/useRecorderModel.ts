@@ -1,6 +1,9 @@
 import * as faceapi from 'face-api.js';
 import { useEffect, useRef, useState } from 'react';
-import RecordRTC from 'recordrtc';
+import RecordRTC, { MediaStreamRecorder } from 'recordrtc';
+
+//const detectorOptions = new faceapi.TinyFaceDetectorOptions()
+const detectorOptions = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4, maxResults: 1 })
 
 export default function () {
   const fragmentCount: number = 4;
@@ -9,7 +12,8 @@ export default function () {
   const [fragmentNumber, setFragmentNumber] = useState<number>(0)
   const [recordedChunks, setRecordedChunks] = useState<Blob[]>([])
   const [facePrompt, setFacePrompt] = useState<string | null>()
-  
+  const [faceOnCamera, setFaceOnCamera] = useState<boolean>(false)
+
   const [recorder, setRecorder] = useState<RecordRTC>();
   const [time, setTime] = useState<number>(0);
   const [video, setVideo] = useState<Blob>();
@@ -17,7 +21,7 @@ export default function () {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    if(time == 0) return;
+    if (time == 0) return;
 
     const timer = setTimeout(recordVideoHandler, 1000);
 
@@ -26,9 +30,19 @@ export default function () {
     };
   }, [time])
 
-  // Обработка при получении последнего фрагмента видео при остановке
+  
   useEffect(() => {
-    if(!isRecording && fragmentNumber >= fragmentCount) {
+    recorder && window.setInterval(() => {
+      const getFaceData = async () => {
+        const result = await isFaceOnCamera()
+        setFaceOnCamera(result)
+      }
+      getFaceData();
+    }, 500)
+  }, [recorder])
+
+  useEffect(() => {
+    if (!isRecording && fragmentNumber >= fragmentCount) {
       const recordedBlob = new Blob(recordedChunks, {
         type: 'video/mp4',
       })
@@ -42,15 +56,17 @@ export default function () {
     setVideo(undefined)
   }
 
-  const initRecorder = () => {
+  const initRecorder = async () => {
     try {
-      faceapi.nets.tinyFaceDetector.loadFromUri('/models');
-      faceapi.nets.faceLandmark68Net.loadFromUri('/models');
-      faceapi.nets.faceRecognitionNet.loadFromUri('/models');
-      faceapi.nets.faceExpressionNet.loadFromUri('/models');
+      //await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
+      await faceapi.nets.ssdMobilenetv1.loadFromUri('/models');
+      await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
+      await faceapi.nets.faceRecognitionNet.loadFromUri('/models');
+      await faceapi.nets.faceExpressionNet.loadFromUri('/models');
 
-      getMediaStreamFromCamera().then((stream: MediaStream) => {
+      getMediaStreamFromCamera().then(async (stream: MediaStream) => {
         console.log('Видео захват включен')
+        
         const recorder = getRecorder(stream)
         setRecorder(recorder)
       });
@@ -60,16 +76,12 @@ export default function () {
     }
   }
 
-  const isFaceOnCamera = async (): Promise<Boolean> => {
-    const detections = await faceapi
-      .detectAllFaces(
-        videoRef.current!,
-        new faceapi.TinyFaceDetectorOptions(),
-      )
-      .withFaceLandmarks()
-      .withFaceExpressions();
-
-    return detections.length > 0;
+  const isFaceOnCamera = async (): Promise<boolean> => {
+    const face = await faceapi.detectSingleFace(videoRef.current!, detectorOptions)
+      //.withFaceLandmarks()
+      //.withFaceExpressions()
+    
+    return face !== undefined
   }
 
   const getMediaStreamFromCamera = async (): Promise<MediaStream> => {
@@ -84,7 +96,9 @@ export default function () {
   const getRecorder = (stream: MediaStream): RecordRTC => {
     const recorder = new RecordRTC(stream, {
       type: 'video',
+      recorderType: MediaStreamRecorder,
       mimeType: 'video/mp4',
+      disableLogs: true,
       timeSlice: 1000,
       ondataavailable: (blob: Blob) => {
         if (blob && blob.size > 0) {
@@ -105,8 +119,6 @@ export default function () {
     }
 
     setTime(prevTime => prevTime + 1)
-
-    const faceOnCamera = await isFaceOnCamera();
 
     if (faceOnCamera) {
       setFragmentNumber(prevDurationSec => prevDurationSec + 1)
