@@ -25,10 +25,10 @@ public class FaceRecordingController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> CheckVideo([FromForm]FaceRecordRequest? request)
+    public async Task<LivenessResponse> CheckVideo([FromForm]FaceRecordRequest? request)
     {
         if (request?.Video is null || request.Video.Length == 0)
-            return BadRequest("Не удалось загрузить видео.");
+            return new LivenessResponse("Ошибка загрузки видео");
         
         var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "Uploads");
 
@@ -52,13 +52,26 @@ public class FaceRecordingController : ControllerBase
         var videoContent = new StreamContent(videoStream);
         videoContent.Headers.ContentType = MediaTypeHeaderValue.Parse("video/mp4");
         content.Add(videoContent, "video", "video.mp4");
-        
-        var response = await client.PostAsync(LivelinessApiUrl, content);
-        var responseText = await response.Content.ReadAsStringAsync();
-        var responseData = await response.Content.ReadFromJsonAsync<LivelinessResponse>();
 
-        _logger.LogInformation($"Response: {responseText}");
+        try
+        {
+            var response = await client.PostAsync(LivelinessApiUrl, content);
+            var responseText = await response.Content.ReadAsStringAsync();
+            var responseData = await response.Content.ReadFromJsonAsync<IdxLivenessResponse>();
 
-        return Ok(new { alive = responseData.Alive, photo = responseData.Photo });
+            _logger.LogInformation($"Результат определения живости: {responseData.Alive}");
+
+            return new LivenessResponse
+            {
+                Alive = responseData.Alive,
+                Photo = responseData.Photo
+            };
+        }
+        catch(Exception ex)
+        {
+            _logger.LogError($"Проверка завершилась ошибкой: {ex.Message}");
+
+            return new LivenessResponse(ex.Message);
+        }
     }
 }

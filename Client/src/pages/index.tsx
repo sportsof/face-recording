@@ -89,7 +89,11 @@ export default () => {
           <Result
             status={liveness.alive ? "success" : "error"}
             title={liveness.alive ? "Проверка пройдена" : "Проверка не пройдена"}
-            extra={liveness.alive ? [<img key="photo" src={`data:image/png;base64,${liveness.photo}`} style={{ width: '100%' }} />] : null}
+            extra={[
+              liveness.alive 
+              ? <img key="photo" src={`data:image/png;base64,${liveness.photo}`} style={{ width: '100%' }} />
+              : <p key="message">{liveness.message}</p>
+            ]}
           />
         </>}
       </Modal>
