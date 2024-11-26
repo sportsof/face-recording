@@ -12,13 +12,16 @@ export default function () {
   const [fragmentNumber, setFragmentNumber] = useState<number>(0)
   const [recordedChunks, setRecordedChunks] = useState<Blob[]>([])
   const [facePrompt, setFacePrompt] = useState<string | null>()
-  const [faceOnCamera, setFaceOnCamera] = useState<boolean>(false)
-
+  
   const [recorder, setRecorder] = useState<RecordRTC>();
   const [time, setTime] = useState<number>(0);
   const [video, setVideo] = useState<Blob>();
 
+  const [faceOnCamera, setFaceOnCamera] = useState<boolean>(false)
+  const [faceTime, setFaceTime] = useState<number>(0)
+
   const videoRef = useRef<HTMLVideoElement>(null);
+
 
   useEffect(() => {
     if (time == 0) return;
@@ -30,16 +33,18 @@ export default function () {
     };
   }, [time])
 
-  
   useEffect(() => {
-    recorder && window.setInterval(() => {
-      const getFaceData = async () => {
-        const result = await isFaceOnCamera()
-        setFaceOnCamera(result)
-      }
-      getFaceData();
-    }, 500)
-  }, [recorder])
+    const timer = setTimeout(async () => {
+      setFaceTime(prevTime => prevTime + 1)
+      const result = await isFaceOnCamera()
+      console.log('face', result)
+      setFaceOnCamera(result)
+    }, 500);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [faceTime])
 
   useEffect(() => {
     if (!isRecording && fragmentNumber >= fragmentCount) {
@@ -69,6 +74,7 @@ export default function () {
         
         const recorder = getRecorder(stream)
         setRecorder(recorder)
+        setFaceTime(prevTime => prevTime + 1)
       });
       console.log('Модели загружены успешно');
     } catch (error) {
