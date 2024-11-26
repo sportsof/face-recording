@@ -91,7 +91,12 @@ export default function () {
   }
 
   const getMediaStreamFromCamera = async (): Promise<MediaStream> => {
-    return navigator.mediaDevices.getUserMedia({ video: true }).then(result => {
+    const constraints: any = { audio: false, video: { facingMode: 'user', resizeMode: 'crop-and-scale' } };
+    
+    if (window.innerWidth > window.innerHeight) constraints.video.width = { ideal: window.innerWidth };
+    else constraints.video.height = { ideal: window.innerHeight };
+
+    return navigator.mediaDevices.getUserMedia(constraints).then(result => {
       if (videoRef.current != null) {
         videoRef.current.srcObject = result;
       }
