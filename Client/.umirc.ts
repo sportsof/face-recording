@@ -1,6 +1,7 @@
 import { defineConfig } from '@umijs/max';
 
 export default defineConfig({
+  hash: true,
   antd: {},
   access: {},
   model: {},

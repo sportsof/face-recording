@@ -39,7 +39,7 @@ export default function () {
       const result = await isFaceOnCamera()
       console.log('face', result)
       setFaceOnCamera(result)
-    }, 500);
+    }, 1000);
 
     return () => {
       clearTimeout(timer);
