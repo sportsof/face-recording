@@ -13,7 +13,7 @@ export default function () {
   const [recordedChunks, setRecordedChunks] = useState<Blob[]>([])
   const [facePrompt, setFacePrompt] = useState<string | null>()
   
-  const [recorder, setRecorder] = useState<RecordRTC>();
+  const [recorder, setRecorder] = useState<MediaRecorder>();
   const [time, setTime] = useState<number>(0);
   const [video, setVideo] = useState<Blob>();
 
@@ -21,6 +21,8 @@ export default function () {
   const [faceTime, setFaceTime] = useState<number>(0)
 
   const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
 
 
   useEffect(() => {
@@ -73,6 +75,7 @@ export default function () {
         console.log('Видео захват включен')
         
         const recorder = getRecorder(stream)
+        mediaRecorderRef.current = recorder;
         setRecorder(recorder)
         setFaceTime(prevTime => prevTime + 1)
       });
@@ -86,9 +89,40 @@ export default function () {
     const face = await faceapi.detectSingleFace(videoRef.current!, detectorOptions)
       //.withFaceLandmarks()
       //.withFaceExpressions()
+      if (face) {
+        drawFaceOutline(face);
+      }
     
     return face !== undefined
   }
+
+  const drawFaceOutline = (face: faceapi.FaceDetection) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const displaySize = { width: videoRef.current!.videoWidth, height: videoRef.current!.videoHeight };
+    faceapi.matchDimensions(canvas, displaySize);
+
+    const resizedDetection = faceapi.resizeResults(face, displaySize);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 4;
+    ctx.setLineDash([5, 5]);
+
+    const box = resizedDetection.box;
+    const centerX = box.x + box.width / 2;
+    const centerY = box.y + box.height / 2;
+    const radiusX = box.width / 2 + box.width * 0.3;
+    const radiusY = box.height / 2 + box.height * 0.3;
+
+    ctx.beginPath();
+    ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, 2 * Math.PI);
+    ctx.stroke();
+  };
 
   const getMediaStreamFromCamera = async (): Promise<MediaStream> => {
     const constraints: any = { audio: false, video: { facingMode: 'user', resizeMode: 'crop-and-scale' } };
@@ -104,23 +138,19 @@ export default function () {
     })
   }
 
-  const getRecorder = (stream: MediaStream): RecordRTC => {
-    const recorder = new RecordRTC(stream, {
-      type: 'video',
-      recorderType: MediaStreamRecorder,
+  const getRecorder = (stream: MediaStream): MediaRecorder => {
+    const mediaRecorder = new MediaRecorder(stream, {
       mimeType: 'video/mp4',
-      disableLogs: true,
-      timeSlice: 1000,
-      ondataavailable: (blob: Blob) => {
-        if (blob && blob.size > 0) {
-          setRecordedChunks(prevChunks => [...prevChunks, blob])
-          console.log('Добавлен фрагмент:', blob);
-        } else {
-          console.warn('Событие ondataavailable не содержит данных');
-        }
-      },
-    })
-    return recorder
+    });
+
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        setRecordedChunks(prevChunks => [...prevChunks, event.data]);
+        console.log('Добавлен фрагмент:', event.data);
+      }
+    };
+
+    return mediaRecorder;
   }
 
   const recordVideoHandler = async () => {
@@ -156,8 +186,7 @@ export default function () {
       setIsRecording(true)
       setFragmentNumber(0)
 
-      recorder.reset();
-      recorder.startRecording();
+      mediaRecorderRef.current!.start();
 
       console.log('Начало записи:', new Date().toISOString());
     }
@@ -165,7 +194,7 @@ export default function () {
 
   const stopRecording = () => {
     if (recorder && isRecording) {
-      recorder.stopRecording();
+      mediaRecorderRef.current!.stop();
 
       setIsRecording(false)
 
@@ -181,6 +210,7 @@ export default function () {
     startLiveness,
     facePrompt,
     fillFacePrompt,
-    videoRef
+    videoRef,
+    canvasRef
   }
 }

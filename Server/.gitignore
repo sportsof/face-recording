@@ -443,3 +443,5 @@ FodyWeavers.xsd
 
 #
 appsettings.Production.json
+
+./uploads
