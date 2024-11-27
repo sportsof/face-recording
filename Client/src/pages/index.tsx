@@ -17,6 +17,8 @@ export default () => {
     fillFacePrompt,
     videoRef,
     canvasRef,
+    setShowOval,
+    showOval
   } = useModel('useRecorderModel');
 
   const [isModalOpen, setIsmodalOpen] = React.useState(false);
@@ -30,6 +32,7 @@ export default () => {
 
   useEffect(() => {
     initRecorder();
+    setShowOval(true);
   }, []);
 
   useEffect(() => {
@@ -56,6 +59,7 @@ export default () => {
           setButtonDisabled(false);
           fillFacePrompt(null);
           setIsmodalOpen(true);
+          setShowOval(false);
         });
     }
   }, [video]);
@@ -91,6 +95,7 @@ export default () => {
               width: '100%',
               height: '100%',
               zIndex: 1,
+              display: showOval ? 'block' : 'none',
             }}
           />
           {isRecording && <div className="record-icon" />}
